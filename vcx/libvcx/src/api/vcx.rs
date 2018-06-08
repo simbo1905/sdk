@@ -101,21 +101,22 @@ fn _finish_init(command_handle: u32, cb: extern fn(xcommand_handle: u32, err: u3
 
     settings::log_settings();
 
-    if wallet::get_wallet_handle() > 0 {
-        error!("Library was already initialized");
-        return error::ALREADY_INITIALIZED.code_num;
-    }
+    // TODO: wallet may already be opened in vcx_wallet_init(), change to settings::is_agent_configured()
+    // if wallet::get_wallet_handle() > 0 {
+    //     error!("Library was already initialized");
+    //     return error::ALREADY_INITIALIZED.code_num;
+    // }
 
     info!("libvcx version: {}{}", version_constants::VERSION, version_constants::REVISION);
 
     thread::spawn(move|| {
         match ::utils::libindy::init_pool_and_wallet() {
             Err(e) => {
-                warn!("Init Wallet Error {}.", e);
+                println!("Init Wallet Error {}.", e);
                 cb(command_handle, e);
             },
             Ok(_) => {
-                debug!("Init Wallet Successful");
+                println!("Init Wallet Successful");
                 cb(command_handle, error::SUCCESS.code_num);
             },
         }

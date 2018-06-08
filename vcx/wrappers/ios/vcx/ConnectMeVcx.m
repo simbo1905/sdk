@@ -296,14 +296,14 @@ completion:(void (^)(NSError *error))completion
 
 - (void)connectionCreateWithInvite:(NSString *)invitationId
                 inviteDetails:(NSString *)inviteDetails
-             completion:(void (^)(NSError *error, NSString *credentialHandle)) completion
+             completion:(void (^)(NSError *error, NSInteger connectionHandle)) completion
 {
    vcx_error_t ret;
 
    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
    const char *invitationId_char = [invitationId cString];
    const char *inviteDetails_char = [inviteDetails cString];
-   ret = vcx_connection_create_with_invite(handle, invitationId_char, inviteDetails_char, VcxWrapperCommonStringCallback);
+   ret = vcx_connection_create_with_invite(handle, invitationId_char, inviteDetails_char, VcxWrapperCommonHandleCallback);
    if( ret != 0 )
    {
        [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
@@ -314,12 +314,11 @@ completion:(void (^)(NSError *error))completion
    }
 }
 
-- (void)connectionConnect: (NSInteger *) connectionHandle
+- (void)connectionConnect: (NSInteger ) connectionHandle
         connectionType: (NSString *) connectionType
             completion: (void (^)(NSError *error, NSString *inviteDetails)) completion
 {
    vcx_error_t ret;
-   
    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
    const char *connectionType_char = [connectionType cString];
     ret = vcx_connection_connect(handle, connectionHandle, connectionType_char, VcxWrapperCommonStringCallback);
@@ -332,7 +331,38 @@ completion:(void (^)(NSError *error))completion
        });
    }
 }
+- (void)connectionSerialize:(NSInteger )connectionHandle
+                    completion:(void (^)(NSError *error, NSString *state))completion{
+   vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
 
+    
+    ret = vcx_connection_serialize(handle, connectionHandle, VcxWrapperCommonStringCallback);
+   if( ret != 0 )
+   {
+       [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+       
+       dispatch_async(dispatch_get_main_queue(), ^{
+           completion([NSError errorFromVcxError: ret],nil);
+       });
+   }
+}
+- (void)connectionDeserialize:(NSString *)serializedConnection
+                    completion:(void (^)(NSError *error, NSInteger credentailHandle))completion{
+   vcx_error_t ret;
+    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
+    const char *serialized_connection=[serializedConnection cString];
+    ret = vcx_connection_deserialize(handle, serialized_connection, VcxWrapperCommonNumberCallback);
+
+   if( ret != 0 )
+   {
+       [[VcxCallbacks sharedInstance] deleteCommandHandleFor: handle];
+       
+       dispatch_async(dispatch_get_main_queue(), ^{
+           completion([NSError errorFromVcxError: ret],nil);
+       });
+   }
+}
 - (void)agentUpdateInfo: (NSString *) config
             completion: (void (^)(NSError *error)) completion
 {
@@ -351,7 +381,7 @@ completion:(void (^)(NSError *error))completion
    }
 }
 
-- (void)getCredential:(NSInteger *)credentailHandle
+- (void)getCredential:(NSInteger )credentailHandle
            completion:(void (^)(NSError *error, NSString *credential))completion{
    vcx_error_t ret;
    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
@@ -370,7 +400,7 @@ completion:(void (^)(NSError *error))completion
 
 - (void)credentialCreateWithOffer:(NSString *)sourceId
             offer:(NSString *)credentialOffer
-           completion:(void (^)(NSError *error, NSInteger *credentailHandle))completion{
+           completion:(void (^)(NSError *error, NSInteger credentailHandle))completion{
    vcx_error_t ret;
    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
    const char * credential_offer=[credentialOffer cString];
@@ -389,7 +419,7 @@ completion:(void (^)(NSError *error))completion
 - (void)credentialCreateWithMsgid:(NSString *)sourceId
                  connectionHandle:(VcxHandle *)connectionHandle
                             msgId:(NSString *)msgId
-                       completion:(void (^)(NSError *error, NSInteger *credentailHandle))completion;{
+                       completion:(void (^)(NSError *error, NSInteger credentailHandle))completion;{
    vcx_error_t ret;
    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
    const char * source_id = [sourceId cString];
@@ -406,7 +436,7 @@ completion:(void (^)(NSError *error))completion
    }
 }
 
-- (void)credentialSendRequest:(NSInteger *)credentailHandle
+- (void)credentialSendRequest:(NSInteger )credentailHandle
              connectionHandle:(VcxHandle *)connectionHandle
                    completion:(void (^)(NSError *error, NSString *credential))completion{
     vcx_error_t ret;
@@ -423,8 +453,8 @@ completion:(void (^)(NSError *error))completion
        });
    }
 }
-- (void)credentialGetState:(NSInteger *)credentailHandle
-                completion:(void (^)(NSError *error,NSInteger *state))completion{
+- (void)credentialGetState:(NSInteger )credentailHandle
+                completion:(void (^)(NSError *error,NSInteger state))completion{
    vcx_error_t ret;
    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
 
@@ -480,7 +510,7 @@ completion:(void (^)(NSError *error))completion
    }
 }
 
-- (void)credentialSerialize:(NSInteger *)credentailHandle
+- (void)credentialSerialize:(NSInteger )credentailHandle
                   completion:(void (^)(NSError *error, NSString *state))completion{
     vcx_error_t ret;
    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
@@ -497,7 +527,7 @@ completion:(void (^)(NSError *error))completion
    }
 }
 - (void)credentialDeserialize:(NSString *)serializedCredential
-                    completion:(void (^)(NSError *error, NSInteger *credentailHandle))completion{
+                    completion:(void (^)(NSError *error, NSInteger credentailHandle))completion{
    vcx_error_t ret;
    vcx_command_handle_t handle = [[VcxCallbacks sharedInstance] createCommandHandleFor:completion];
     const char *serialized_credential=[serializedCredential cString];
